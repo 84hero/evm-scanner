@@ -5,6 +5,8 @@
 [![GoDoc](https://godoc.org/github.com/84hero/evm-scanner?status.svg)](https://godoc.org/github.com/84hero/evm-scanner)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+**[English](README.md)** | **[简体中文](README_CN.md)**
+
 A high-performance, industrial-grade EVM event scanning and indexing framework. Built for developers who need reliable, real-time access to blockchain data without the overhead of complex indexing solutions.
 
 [Features](#features) • [Installation](#installation) • [Quick Start](#quick-start) • [Documentation](#documentation) • [Contributing](#contributing)
