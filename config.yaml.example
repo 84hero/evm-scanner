@@ -1,0 +1,41 @@
+# Unique identifier for the project, used to distinguish scan progress in DB or Redis
+project: "evm-scanner-service"
+
+# Logging configuration
+log:
+  level: "info"  # debug, info, warn, error
+  format: "text" # text (Dev mode, colorful), json (Production mode, structured)
+
+# Scanner core operational parameters
+scanner:
+  chain_id: "ethereum"    # Chain identifier (e.g., ethereum, polygon, bsc)
+  
+  # --- Startup and Fault Tolerance Strategies ---
+  
+  # Force start: If true, ignores saved progress and forces scan from start_block (typically for backfilling)
+  force_start: false
+  start_block: 0
+  
+  # Initial deployment strategy: If no saved progress, start scanning from (Current Block - start_rewind)
+  start_rewind: 1000
+  
+  # Restart fault tolerance: If progress exists, start from (Saved Cursor - cursor_rewind) to handle short-lived forks
+  cursor_rewind: 10
+
+  # --- Frequency and Performance ---
+  batch_size: 50          # Maximum block range per RPC request
+  interval: "2s"          # Polling interval for new blocks (e.g., 1s, 3s, 500ms)
+  confirmations: 12       # Safety confirmations, scan up to (Latest Height - confirmations)
+  use_bloom: true         # Enable node-level Bloom Filter optimization
+
+  # Storage layer prefix: Used to isolate table names or Redis keys
+  storage_prefix: "evm_scan_"
+
+# RPC Node Pool (supports high availability with automatic failover based on priority)
+rpc_nodes:
+  - url: "https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY"
+    priority: 10
+  - url: "https://rpc.ankr.com/eth"
+    priority: 5
+  - url: "https://1rpc.io/eth"
+    priority: 1

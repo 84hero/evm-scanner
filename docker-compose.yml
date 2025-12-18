@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  scanner:
+    build: .
+    image: evm-scanner:latest
+    container_name: evm-scanner
+    restart: unless-stopped
+    environment:
+      - CONFIG_FILE=/config/config.yaml
+      - APP_CONFIG_FILE=/config/app.yaml
+      # Override the address here if you need to connect to an external database
+      # - SCANNER_OUTPUTS_POSTGRES_URL=postgres://user:pass@host.docker.internal:5432/db
+    volumes:
+      - ./config.yaml:/config/config.yaml:ro
+      - ./app.yaml:/config/app.yaml:ro
+      # Mount data directory for persistent File output
+      - ./data:/app/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

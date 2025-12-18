@@ -1,0 +1,71 @@
+# Scan Filter Configuration
+filters:
+  - description: "USDT Transfers"
+    # List of contract addresses to listen to (leave empty to listen to all networks)
+    contracts: 
+      - "0xdAC17F958D2ee523a2206206994597C13D831ec7" # USDT
+    # Event signature Topic (Topic0)
+    # Transfer(address,address,uint256)
+    topics:
+      - ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"]
+    # Optional: Provide ABI JSON string for automatic log decoding
+    abi: '[{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"}]'
+
+# Diverse Output Configurations (Pipeline mode, multiple can be enabled)
+outputs:
+  # 1. Webhook Push
+  webhook:
+    enabled: false
+    url: "https://your-api-endpoint.com/webhook"
+    secret: "your-signature-secret"
+    retry:
+      max_attempts: 3
+      initial_backoff: "1s"
+      max_backoff: "10s"
+    # [Performance] Async buffering: Scanner won't wait for Webhook response
+    async: true 
+    buffer_size: 2000 # Memory buffer size
+    workers: 5        # Concurrent sending workers
+
+  # 2. Local File Storage (JSON Lines format)
+  file:
+    enabled: false
+    path: "./data/events.jsonl"
+    
+  # 3. Standard Output (JSON Stream)
+  # Can be processed via pipe: ./scanner-cli | jq .
+  console:
+    enabled: true
+
+  # 4. PostgreSQL (Relational Database)
+  # Auto table creation, supports UNIQUE constraints to prevent duplicates
+  postgres:
+    enabled: false
+    url: "postgres://user:pass@localhost:5432/dbname?sslmode=disable"
+    table: "contract_events"
+
+  # 5. Redis (High-performance Middleware)
+  redis:
+    enabled: false
+    addr: "localhost:6379"
+    password: ""
+    db: 0
+    key: "evm_events_queue"
+    mode: "list" # "list" (Queue) or "pubsub" (Subscription)
+
+  # 6. Kafka (Massive Data Stream)
+  kafka:
+    enabled: false
+    brokers: ["localhost:9092"]
+    topic: "evm-events"
+    # user: ""
+    # password: ""
+
+  # 7. RabbitMQ (Enterprise Message Queue)
+  rabbitmq:
+    enabled: false
+    url: "amqp://guest:guest@localhost:5672/"
+    exchange: "evm_events_ex"
+    routing_key: "eth.mainnet"
+    queue_name: "evm_events_q" # If configured, will be auto-declared and bound on start
+    durable: true              # Message durability
