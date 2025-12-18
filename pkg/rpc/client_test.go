@@ -155,6 +155,16 @@ func TestNewClient_Errors(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestNewClient_Unreachable(t *testing.T) {
+	ctx := context.Background()
+	// Truly invalid URLs that fail parsing or dialing immediately
+	configs := []NodeConfig{
+		{URL: "invalid-scheme://", Priority: 1},
+	}
+	_, err := NewClient(ctx, configs, 10)
+	assert.Error(t, err)
+}
+
 func TestNodeGetters(t *testing.T) {
 	n := &Node{config: NodeConfig{URL: "http://test", Priority: 5}}
 	assert.Equal(t, "http://test", n.URL())

@@ -56,6 +56,11 @@ func TestDecode(t *testing.T) {
 	assert.Equal(t, amount, decoded.Inputs["value"]) // Note: type matching is important; ABI usually decodes to *big.Int
 }
 
+func TestNewFromJSON_Fail(t *testing.T) {
+	_, err := NewFromJSON("invalid json")
+	assert.Error(t, err)
+}
+
 func TestDecode_ErrorCases(t *testing.T) {
 	const abiJSON = `[{"anonymous":false,"inputs":[],"name":"Empty","type":"event"}]`
 	d, _ := NewFromJSON(abiJSON)
@@ -70,4 +75,12 @@ func TestDecode_ErrorCases(t *testing.T) {
 	_, err = d.Decode(types.Log{Topics: []common.Hash{unknownSig}})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "signature not found")
+
+	// Case 3: Topic count mismatch
+	const abiWithIndexed = `[{"anonymous":false,"inputs":[{"indexed":true,"name":"a","type":"address"}],"name":"Event","type":"event"}]`
+	d2, _ := NewFromJSON(abiWithIndexed)
+	event, _ := d2.parsedABI.EventByID(crypto.Keccak256Hash([]byte("Event(address)")))
+	_, err = d2.Decode(types.Log{Topics: []common.Hash{event.ID}}) // Missing indexed topic
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "topic count mismatch")
 }

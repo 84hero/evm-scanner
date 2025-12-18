@@ -1,4 +1,4 @@
-.PHONY: all build test lint clean docker-build help snapshot release run
+.PHONY: all build test lint clean docker-build help snapshot release run cover
 
 # Project Variables
 BINARY_NAME=scanner-cli
@@ -13,6 +13,7 @@ help:
 	@echo "Available commands:"
 	@echo "  make build         - Build the scanner-cli binary to bin/"
 	@echo "  make test          - Run all unit tests with coverage"
+	@echo "  make cover         - Show core logic coverage (excluding examples)"
 	@echo "  make lint          - Run golangci-lint"
 	@echo "  make clean         - Remove binaries, temp files, and artifacts"
 	@echo "  make docker-build  - Build the Docker image"
@@ -31,6 +32,13 @@ build:
 test:
 	@echo "Running tests..."
 	go test -v -cover ./...
+
+# Coverage Report (Excluding examples)
+cover:
+	@echo "Calculating core coverage..."
+	go test -coverprofile=coverage.out $$(go list ./... | grep -v "examples/" | grep -v "cmd/example")
+	go tool cover -func=coverage.out
+	@rm coverage.out
 
 # Lint Code (requires golangci-lint)
 lint:

@@ -11,6 +11,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestNewNode(t *testing.T) {
+	ctx := context.Background()
+	// Fails to dial invalid URL
+	_, err := NewNode(ctx, NodeConfig{URL: "invalid", Priority: 10})
+	assert.Error(t, err)
+}
+
 func TestNode_ProxyMethods(t *testing.T) {
 	ctx := context.Background()
 	mockEth := new(MockEthClient)

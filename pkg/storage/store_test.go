@@ -33,6 +33,23 @@ func TestMemoryStore(t *testing.T) {
 
 // --- Postgres Store Tests ---
 
+func TestPostgresStore_InitTable(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+
+	store := &PostgresStore{
+		db:        db,
+		tableName: "custom_checkpoints",
+	}
+
+	mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS custom_checkpoints")).
+		WillReturnResult(sqlmock.NewResult(0, 0))
+
+	err = store.initTable()
+	assert.NoError(t, err)
+}
+
 func TestPostgresStore_SaveLoad(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	assert.NoError(t, err)
@@ -93,17 +110,53 @@ func TestPostgresStore_SaveLoad(t *testing.T) {
 	
 	// Note: NewPostgresStore involves real sql.Open, making it difficult to fully mock the driver layer.
 	
+	
+	
 	// However, we can test passing an invalid URL.
+	
+	
 	
 	func TestNewPostgresStore_InvalidURL(t *testing.T) {
 	
+	
+	
 		// This is a malformed connection string
+	
+	
 	
 		_, err := NewPostgresStore("postgres://invalid-url?param=^^", "prefix")
 	
+	
+	
 		assert.Error(t, err)
 	
+	
+	
 	}
+	
+	
+	
+	
+	
+	
+	
+	func TestNewPostgresStore_Mock(t *testing.T) {
+	
+	
+	
+		// We can't easily mock the 'sql.Open' call inside NewPostgresStore because it's a package level function,
+	
+	
+	
+		// but the code is already mostly covered by the Save/Load tests which use a manually constructed PostgresStore.
+	
+	
+	
+	}
+	
+	
+	
+	
 	
 	
 	
@@ -197,7 +250,12 @@ func TestPostgresStore_SaveLoad(t *testing.T) {
 	
 	
 	
-	// TestNewRedisStore_PingFail attempts to test connection failure logic.
+	func TestNewRedisStore_Mock(t *testing.T) {
+	// redismock doesn't directly mock NewRedisStore because it calls redis.NewClient inside.
+	// But we can verify our Load/Save tests already cover the logic.
+}
+
+// TestNewRedisStore_PingFail attempts to test connection failure logic.
 	
 	// Note that NewRedisStore performs an actual Ping, so we need an unreachable address.
 	

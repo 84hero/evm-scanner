@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -56,20 +57,43 @@ func TestWebhookSend(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestWebhook_Error(t *testing.T) {
-	// Test HTTP 404 scenario
+func TestWebhook_Retry(t *testing.T) {
+	attempts := 0
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusNotFound)
+		attempts++
+		if attempts < 2 {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
 	}))
 	defer ts.Close()
 
-	client := NewClient(Config{URL: ts.URL, Secret: "test-secret"})
-	logs := []types.Log{
-		{
-			Topics: []common.Hash{},
-		},
-	}
+	// Set short backoff for faster test
+	client := NewClient(Config{
+		URL:            ts.URL,
+		MaxAttempts:    3,
+		InitialBackoff: 1 * time.Millisecond,
+		MaxBackoff:     5 * time.Millisecond,
+	})
+	
+	logs := []types.Log{{Index: 1}}
 	err := client.Send(context.Background(), logs)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, attempts)
+}
+
+func TestWebhook_ContextCancel(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(10 * time.Millisecond)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	client := NewClient(Config{URL: ts.URL, MaxAttempts: 3})
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel immediately
+
+	err := client.Send(ctx, []types.Log{{Index: 1}})
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "404")
 }

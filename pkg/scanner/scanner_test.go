@@ -263,7 +263,9 @@ func TestScanner_Start(t *testing.T) {
 	//    b. scanRange (100 to 102, assuming safe confirmation 3)
 	//       105 - 3 = 102. So scan 100 to 102.
 	client.On("FilterLogs", mock.Anything, mock.Anything).Return([]types.Log{}, nil)
-	//    c. SaveCursor
+	//    c. SaveCursor fails (should log and continue)
+	store.On("SaveCursor", "eth", mock.Anything).Return(assert.AnError).Once()
+	// Next iteration
 	store.On("SaveCursor", "eth", mock.Anything).Return(nil)
 
 	s := New(client, store, Config{
