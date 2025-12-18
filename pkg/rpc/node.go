@@ -119,6 +119,26 @@ func (n *Node) UpdateHeight(h uint64) {
 	}
 }
 
+// GetErrorCount returns the current consecutive error count
+func (n *Node) GetErrorCount() uint64 {
+	return atomic.LoadUint64(&n.errorCount)
+}
+
+// GetTotalErrors returns the total error count
+func (n *Node) GetTotalErrors() uint64 {
+	return atomic.LoadUint64(&n.totalErrors)
+}
+
+// GetLatency returns the average latency in ms
+func (n *Node) GetLatency() int64 {
+	return atomic.LoadInt64(&n.latency)
+}
+
+// GetLatestBlock returns the latest block height observed by this node
+func (n *Node) GetLatestBlock() uint64 {
+	return atomic.LoadUint64(&n.latestBlock)
+}
+
 // Proxy Methods (implement Client interface)
 
 func (n *Node) BlockNumber(ctx context.Context) (uint64, error) {

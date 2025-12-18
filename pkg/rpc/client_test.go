@@ -59,7 +59,7 @@ func TestMultiClient_Failover(t *testing.T) {
 	assert.Equal(t, uint64(100), h)
 
 	// Check metrics: Node 1 should have errors
-	assert.Equal(t, uint64(1), node1.totalErrors)
+	assert.Equal(t, uint64(1), node1.GetTotalErrors())
 }
 
 func TestNode_ScoreLag(t *testing.T) {
