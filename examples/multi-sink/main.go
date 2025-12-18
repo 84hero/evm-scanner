@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/84hero/evm-scanner/pkg/rpc"
 	"github.com/84hero/evm-scanner/pkg/scanner"
@@ -67,7 +68,7 @@ func main() {
 	scanCfg := scanner.Config{
 		ChainID:      "ethereum",
 		Rewind:       10, // Start from 10 blocks ago
-		Interval:     "5s",
+		Interval:     5 * time.Second,
 		ReorgSafe:    2,
 		BatchSize:    10,
 	}

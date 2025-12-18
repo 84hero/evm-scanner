@@ -251,7 +251,7 @@ func (p *PostgresOutput) Send(ctx context.Context, logs []DecodedLog) error {
 	for i, l := range logs {
 		jsonData, _ := json.Marshal(l)
 		n := i * 5
-		valueStrings = append(valueStrings, fmt.Sprintf("($%%d, $%%d, $%%d, $%%d, $%%d)", n+1, n+2, n+3, n+4, n+5))
+		valueStrings = append(valueStrings, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d)", n+1, n+2, n+3, n+4, n+5))
 		valueArgs = append(valueArgs, l.Log.BlockNumber, l.Log.TxHash.Hex(), l.Log.Index, l.EventName, jsonData)
 	}
 	stmt := fmt.Sprintf("INSERT INTO %s (block_number, tx_hash, log_index, event_name, data) VALUES %s ON CONFLICT (tx_hash, log_index) DO NOTHING", p.table, strings.Join(valueStrings, ","))

@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/84hero/evm-scanner/pkg/rpc"
 	"github.com/84hero/evm-scanner/pkg/scanner"
@@ -46,7 +46,7 @@ func main() {
 	// 3. Scanner logic
 	filter := scanner.NewFilter() // Scan everything for this demo
 	s := scanner.New(client, store, scanner.Config{
-		ChainID: "ethereum", Rewind: 1, Interval: "5s",
+		ChainID: "ethereum", Rewind: 1, Interval: 5 * time.Second,
 	}, filter)
 
 	s.SetHandler(func(ctx context.Context, logs []types.Log) error {

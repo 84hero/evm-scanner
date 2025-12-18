@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/84hero/evm-scanner/pkg/decoder"
 	"github.com/84hero/evm-scanner/pkg/rpc"
@@ -42,7 +43,7 @@ func main() {
 
 	// 4. Scanner with Decoding Logic
 	s := scanner.New(client, store, scanner.Config{
-		ChainID: "ethereum", Rewind: 5, Interval: "5s",
+		ChainID: "ethereum", Rewind: 5, Interval: 5 * time.Second,
 	}, filter)
 
 	s.SetHandler(func(ctx context.Context, logs []types.Log) error {
