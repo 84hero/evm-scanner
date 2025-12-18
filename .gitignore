@@ -1,0 +1,48 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+scanner-cli
+example-main
+
+# Test binary
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.out
+
+# Go workspace
+go.work
+go.work.sum
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+
+# Project specific
+dist/
+bin/
+data/
+
+# Environment variables
+.env
+.env.*
+! .env.example
+
+# Configuration files
+# We track .example files but ignore the actual runtime configs 
+# as they usually contain sensitive RPC keys and DB passwords.
+config.yaml
+app.yaml
+!config.yaml.example
+!app.yaml.example
