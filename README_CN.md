@@ -9,7 +9,7 @@
 
 一个高性能、工业级的 EVM 事件扫描和索引框架。为需要可靠、实时访问区块链数据的开发者而构建，无需复杂索引解决方案的开销。
 
-[特性](#-特性) • [安装](#-安装) • [快速开始](#-快速开始) • [文档](#-使用示例) • [贡献](#-贡献)
+[特性](#-特性) • [安装](#-安装) • [快速开始](#-快速开始) • [文档](#-文档) • [示例](#-使用示例) • [贡献](#-贡献)
 
 ---
 
@@ -46,8 +46,13 @@ make build
 
 ### 1. 初始化配置
 ```bash
+# 使用英文配置示例
 cp config.yaml.example config.yaml
 cp app.yaml.example app.yaml
+
+# 或使用中文配置示例（包含中文注释说明）
+cp config.yaml.example.cn config.yaml
+cp app.yaml.example.cn app.yaml
 ```
 
 ### 2. 运行 CLI
@@ -60,6 +65,19 @@ cp app.yaml.example app.yaml
 ```bash
 docker-compose up -d
 ```
+
+## 📖 文档
+
+查看详细文档了解更多配置和使用细节：
+
+- [**快速开始**](./docs/zh-CN/quick-start.md) - 在 5 分钟内启动您的第一个扫描器。
+- [**配置指南**](./docs/zh-CN/configuration.md) - 详细的 `config.yaml` 和 `app.yaml` 选项说明。
+- [**架构设计**](./docs/zh-CN/architecture.md) - 了解 EVM Scanner 的内部工作流程。
+- [**API 参考**](./docs/zh-CN/api-reference.md) - Webhook 格式、CLI 参数及数据库结构。
+- [**部署指南**](./docs/zh-CN/deployment.md) - 生产环境部署、监控与优化建议。
+- [**自定义 Sink**](./docs/zh-CN/custom-sink.md) - 学习如何通过 Go SDK 扩展输出目标。
+- [**常见问题 (FAQ)**](./docs/zh-CN/faq.md) - 遇到问题？先在这里找找答案。
+
 
 ## 🛠 使用示例
 

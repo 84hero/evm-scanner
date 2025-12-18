@@ -9,7 +9,7 @@
 
 A high-performance, industrial-grade EVM event scanning and indexing framework. Built for developers who need reliable, real-time access to blockchain data without the overhead of complex indexing solutions.
 
-[Features](#features) • [Installation](#installation) • [Quick Start](#quick-start) • [Documentation](#documentation) • [Contributing](#contributing)
+[Features](#-features) • [Installation](#-installation) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Contributing](#-contributing)
 
 ---
 
@@ -60,6 +60,19 @@ cp app.yaml.example app.yaml
 ```bash
 docker-compose up -d
 ```
+
+## 📖 Documentation
+
+Check out the detailed documentation for configuration and usage depth:
+
+- [**Quick Start**](./docs/en/quick-start.md) - Get your first scanner running in 5 minutes.
+- [**Configuration**](./docs/en/configuration.md) - Detailed guide for `config.yaml` and `app.yaml`.
+- [**Architecture**](./docs/en/architecture.md) - Understand how EVM Scanner works under the hood.
+- [**API Reference**](./docs/en/api-reference.md) - Webhook formats, CLI flags, and Database schema.
+- [**Deployment**](./docs/en/deployment.md) - Production best practices and deployment strategies.
+- [**Custom Sinks**](./docs/en/custom-sink.md) - Learn how to extend the output destinations.
+- [**FAQ**](./docs/en/faq.md) - Frequently asked questions and common troubleshooting.
+
 
 ## 🛠 Usage Examples
 
