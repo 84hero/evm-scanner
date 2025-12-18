@@ -12,17 +12,17 @@ import (
 )
 
 type Config struct {
-	ChainID       string
+	ChainID string
 	// Startup strategy
-	StartBlock    uint64
-	ForceStart    bool
-	Rewind        uint64
-	CursorRewind  uint64 // Safety rewind from saved cursor
-	
-	BatchSize     uint64
-	Interval      time.Duration
-	ReorgSafe     uint64
-	UseBloom      bool
+	StartBlock   uint64
+	ForceStart   bool
+	Rewind       uint64
+	CursorRewind uint64 // Safety rewind from saved cursor
+
+	BatchSize uint64
+	Interval  time.Duration
+	ReorgSafe uint64
+	UseBloom  bool
 }
 
 type Handler func(ctx context.Context, logs []types.Log) error
@@ -43,10 +43,10 @@ func New(client rpc.Client, store storage.Persistence, cfg Config, filter *Filte
 		cfg.Interval = 3 * time.Second
 	}
 	return &Scanner{
-		client:  client,
-		store:   store,
-		config:  cfg,
-		filter:  filter,
+		client: client,
+		store:  store,
+		config: cfg,
+		filter: filter,
 	}
 }
 
@@ -106,8 +106,12 @@ func (s *Scanner) Start(ctx context.Context) error {
 				err := s.scanRange(ctx, currentBlock, endBlock)
 				if err != nil {
 					log.Error("Scan range failed", "from", currentBlock, "to", endBlock, "err", err)
-					// Wait a bit before retrying
-					time.Sleep(1 * time.Second)
+					// Wait a bit before retrying, but respect context
+					select {
+					case <-ctx.Done():
+						return ctx.Err()
+					case <-time.After(1 * time.Second):
+					}
 					break // Break inner loop, wait for next ticker
 				}
 
@@ -117,7 +121,7 @@ func (s *Scanner) Start(ctx context.Context) error {
 				if err := s.store.SaveCursor(s.config.ChainID, nextStart); err != nil {
 					log.Error("Failed to save cursor", "err", err)
 				}
-				
+
 				currentBlock = nextStart
 			}
 		}
@@ -163,13 +167,13 @@ func (s *Scanner) determineStartBlock(ctx context.Context) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	
+
 	start := uint64(0)
 	if head > s.config.Rewind {
 		start = head - s.config.Rewind
 	}
 	log.Info("Start strategy: Rewind from Head", "head", head, "rewind", s.config.Rewind, "start", start)
-	
+
 	return start, nil
 }
 
@@ -181,7 +185,7 @@ func (s *Scanner) scanRange(ctx context.Context, from, to uint64) error {
 	// 3. Scan range is small (Bloom is most effective for single or few blocks)
 	// For simplicity, we only use Bloom when BatchSize=1 or scanning single block
 	// eth_getLogs is usually fast enough anyway.
-	
+
 	shouldCheckBloom := s.config.UseBloom && !s.filter.IsHeavy() && (to == from)
 
 	if shouldCheckBloom {
@@ -199,7 +203,7 @@ func (s *Scanner) scanRange(ctx context.Context, from, to uint64) error {
 
 	// Build eth_getLogs request
 	query := s.filter.ToQuery(from, to)
-	
+
 	// Set range
 	query.FromBlock = big.NewInt(int64(from))
 	query.ToBlock = big.NewInt(int64(to))

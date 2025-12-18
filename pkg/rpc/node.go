@@ -3,7 +3,7 @@ package rpc
 import (
 	"context"
 	"math/big"
-	"sync/atomic"
+	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
@@ -23,7 +23,7 @@ type Node struct {
 	config NodeConfig
 	client EthClient // Interface for underlying ethclient
 
-	// Dynamic metrics (atomic operations)
+	mu          sync.RWMutex
 	errorCount  uint64 // Consecutive error count
 	totalErrors uint64 // Total error count
 	latency     int64  // Average latency (ms)
@@ -63,20 +63,20 @@ func (n *Node) Priority() int {
 // Formula: (Priority * 100) - (Latency / 10) - (ConsecutiveErrors * 500)
 // Points are also deducted if the node lags too far behind the global max height.
 func (n *Node) Score(globalMaxHeight uint64) int64 {
+	n.mu.RLock()
+	defer n.mu.RUnlock()
+
 	score := int64(n.config.Priority) * 100
 
 	// Latency penalty (e.g., 200ms latency = -20 points)
-	avgLatency := atomic.LoadInt64(&n.latency)
-	score -= (avgLatency / 10)
+	score -= (n.latency / 10)
 
 	// Error penalty (consecutive errors are critical)
-	errs := atomic.LoadUint64(&n.errorCount)
-	score -= int64(errs) * 500
+	score -= int64(n.errorCount) * 500
 
 	// Height lag penalty
-	myHeight := atomic.LoadUint64(&n.latestBlock)
-	if globalMaxHeight > 0 && myHeight < globalMaxHeight {
-		lag := globalMaxHeight - myHeight
+	if globalMaxHeight > 0 && n.latestBlock < globalMaxHeight {
+		lag := globalMaxHeight - n.latestBlock
 		if lag > 5 {
 			score -= int64(lag) * 50 // -50 points per lagged block
 		}
@@ -89,54 +89,64 @@ func (n *Node) Score(globalMaxHeight uint64) int64 {
 func (n *Node) RecordMetric(start time.Time, err error) {
 	duration := time.Since(start).Milliseconds()
 
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
 	// Simple moving average for latency
-	oldLatency := atomic.LoadInt64(&n.latency)
-	if oldLatency == 0 {
-		atomic.StoreInt64(&n.latency, duration)
+	if n.latency == 0 {
+		n.latency = duration
 	} else {
 		// New latency weight 20%
-		newLatency := (oldLatency*8 + duration*2) / 10
-		atomic.StoreInt64(&n.latency, newLatency)
+		n.latency = (n.latency*8 + duration*2) / 10
 	}
 
 	if err != nil {
-		atomic.AddUint64(&n.errorCount, 1)
-		atomic.AddUint64(&n.totalErrors, 1)
+		n.errorCount++
+		n.totalErrors++
 	} else {
 		// Decrease error count slowly on success to avoid "jitter"
-		current := atomic.LoadUint64(&n.errorCount)
-		if current > 0 {
-			atomic.StoreUint64(&n.errorCount, current-1)
+		if n.errorCount > 0 {
+			n.errorCount--
 		}
 	}
 }
 
 // UpdateHeight updates the latest block height for the node
 func (n *Node) UpdateHeight(h uint64) {
-	current := atomic.LoadUint64(&n.latestBlock)
-	if h > current {
-		atomic.StoreUint64(&n.latestBlock, h)
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	if h > n.latestBlock {
+		n.latestBlock = h
 	}
 }
 
 // GetErrorCount returns the current consecutive error count
 func (n *Node) GetErrorCount() uint64 {
-	return atomic.LoadUint64(&n.errorCount)
+	n.mu.RLock()
+	defer n.mu.RUnlock()
+	return n.errorCount
 }
 
 // GetTotalErrors returns the total error count
 func (n *Node) GetTotalErrors() uint64 {
-	return atomic.LoadUint64(&n.totalErrors)
+	n.mu.RLock()
+	defer n.mu.RUnlock()
+	return n.totalErrors
 }
 
 // GetLatency returns the average latency in ms
 func (n *Node) GetLatency() int64 {
-	return atomic.LoadInt64(&n.latency)
+	n.mu.RLock()
+	defer n.mu.RUnlock()
+	return n.latency
 }
 
 // GetLatestBlock returns the latest block height observed by this node
 func (n *Node) GetLatestBlock() uint64 {
-	return atomic.LoadUint64(&n.latestBlock)
+	n.mu.RLock()
+	defer n.mu.RUnlock()
+	return n.latestBlock
 }
 
 // Proxy Methods (implement Client interface)
