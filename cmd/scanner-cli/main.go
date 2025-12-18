@@ -40,13 +40,13 @@ type OutputsConfig struct {
 }
 
 type WebhookOutputConfig struct {
-	Enabled    bool          `mapstructure:"enabled"`
-	URL        string        `mapstructure:"url"`
-	Secret     string        `mapstructure:"secret"`
-	Retry      RetryConfig   `mapstructure:"retry"`
-	Async      bool          `mapstructure:"async"`
-	BufferSize int           `mapstructure:"buffer_size"`
-	Workers    int           `mapstructure:"workers"`
+	Enabled    bool        `mapstructure:"enabled"`
+	URL        string      `mapstructure:"url"`
+	Secret     string      `mapstructure:"secret"`
+	Retry      RetryConfig `mapstructure:"retry"`
+	Async      bool        `mapstructure:"async"`
+	BufferSize int         `mapstructure:"buffer_size"`
+	Workers    int         `mapstructure:"workers"`
 }
 
 type WebhookConfig = WebhookOutputConfig
@@ -329,17 +329,22 @@ func Run(ctx context.Context) error {
 		return nil
 	})
 
-	go s.Start(runCtx)
+	go func() {
+		if err := s.Start(runCtx); err != nil {
+			log.Error("Scanner failed", "err", err)
+			cancel()
+		}
+	}()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	
+
 	select {
 	case <-quit:
 		log.Info("Shutting down...")
 	case <-ctx.Done():
 	}
-	
+
 	cancel()
 	time.Sleep(500 * time.Millisecond)
 	return nil
