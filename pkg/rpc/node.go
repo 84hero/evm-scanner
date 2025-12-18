@@ -3,7 +3,6 @@ package rpc
 import (
 	"context"
 	"math/big"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -29,8 +28,6 @@ type Node struct {
 	totalErrors uint64 // Total error count
 	latency     int64  // Average latency (ms)
 	latestBlock uint64 // Latest block height observed by this node
-
-	mu sync.RWMutex
 }
 
 // NewNode creates a new RPC node (Production)

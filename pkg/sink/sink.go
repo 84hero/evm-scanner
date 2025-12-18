@@ -244,7 +244,9 @@ func (p *PostgresOutput) Send(ctx context.Context, logs []DecodedLog) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	valueStrings := make([]string, 0, len(logs))
 	valueArgs := make([]interface{}, 0, len(logs)*5)
@@ -363,8 +365,13 @@ func NewRabbitMQOutput(url, exchange, routingKey, queueName string, durable bool
 		}
 	}
 	if queueName != "" {
-		q, _ := ch.QueueDeclare(queueName, durable, false, false, false, nil)
-		ch.QueueBind(q.Name, routingKey, exchange, false, nil)
+		q, err := ch.QueueDeclare(queueName, durable, false, false, false, nil)
+		if err != nil {
+			ch.Close(); conn.Close(); return nil, err
+		}
+		if err := ch.QueueBind(q.Name, routingKey, exchange, false, nil); err != nil {
+			ch.Close(); conn.Close(); return nil, err
+		}
 	}
 	return &RabbitMQOutput{conn: conn, ch: ch, exchange: exchange, routingKey: routingKey}, nil
 }

@@ -99,13 +99,13 @@ func TestDetermineStartBlock(t *testing.T) {
 	// Case 2: Resume from Store (No Rewind)
 	s = New(client, store, Config{ChainID: "eth"}, nil)
 	store.On("LoadCursor", "eth").Return(uint64(500), nil).Once()
-	start, err = s.DetermineStartBlockForTest(context.Background())
+	start, _ = s.DetermineStartBlockForTest(context.Background())
 	assert.Equal(t, uint64(500), start)
 
 	// Case 3: Resume with Cursor Rewind
 	s = New(client, store, Config{ChainID: "eth", CursorRewind: 10}, nil)
 	store.On("LoadCursor", "eth").Return(uint64(500), nil).Once()
-	start, err = s.DetermineStartBlockForTest(context.Background())
+	start, _ = s.DetermineStartBlockForTest(context.Background())
 	assert.Equal(t, uint64(490), start)
 }
 
