@@ -25,7 +25,7 @@ outputs:
 `
 	tmpFile, _ := os.CreateTemp("", "app_*.yaml")
 	defer os.Remove(tmpFile.Name())
-	tmpFile.WriteString(content)
+	_, _ = tmpFile.WriteString(content)
 	tmpFile.Close()
 
 	cfg, err := loadAppConfig(tmpFile.Name())
@@ -114,9 +114,9 @@ outputs: {console: {enabled: true}}
 	appFile, _ := os.CreateTemp("", "app_*.yaml")
 	defer os.Remove(coreFile.Name())
 	defer os.Remove(appFile.Name())
-	
-	coreFile.WriteString(coreCfg)
-	appFile.WriteString(appCfg)
+
+	_, _ = coreFile.WriteString(coreCfg)
+	_, _ = appFile.WriteString(appCfg)
 	coreFile.Close()
 	appFile.Close()
 
