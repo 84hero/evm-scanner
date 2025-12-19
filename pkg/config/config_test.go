@@ -44,7 +44,7 @@ rpc_nodes:
 	assert.NoError(t, err)
 	tmpFile2.Close()
 	defer os.Remove(tmpFile2.Name())
-	
+
 	_, err = Load(tmpFile2.Name())
 	assert.Error(t, err)
 }
@@ -65,7 +65,7 @@ scanner:
 
 	cfg, err := Load(tmpFile.Name())
 	assert.NoError(t, err)
-	
+
 	// Verify default values (BatchSize=100, Interval=3s)
 	assert.Equal(t, uint64(100), cfg.Scanner.BatchSize)
 	assert.Equal(t, 3*time.Second, cfg.Scanner.Interval)

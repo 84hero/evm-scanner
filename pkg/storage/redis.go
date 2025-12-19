@@ -7,6 +7,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// RedisStore implements the Persistence interface using Redis as a backend.
 type RedisStore struct {
 	client *redis.Client
 	prefix string
@@ -39,12 +40,13 @@ func NewRedisStore(addr, password string, db int, prefix string) (*RedisStore, e
 	}, nil
 }
 
+// LoadCursor retrieves the last scanned block height from Redis
 func (r *RedisStore) LoadCursor(key string) (uint64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
 	fullKey := r.prefix + key
-	
+
 	val, err := r.client.Get(ctx, fullKey).Uint64()
 	if err == redis.Nil {
 		return 0, nil
@@ -55,16 +57,18 @@ func (r *RedisStore) LoadCursor(key string) (uint64, error) {
 	return val, nil
 }
 
+// SaveCursor updates the last scanned block height in Redis
 func (r *RedisStore) SaveCursor(key string, height uint64) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
 	fullKey := r.prefix + key
-	
+
 	// Set value with no expiration (0)
 	return r.client.Set(ctx, fullKey, height, 0).Err()
 }
 
+// Close closes the Redis client connection
 func (r *RedisStore) Close() error {
 	return r.client.Close()
 }

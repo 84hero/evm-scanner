@@ -54,10 +54,10 @@ func main() {
 
 	// 4. Setup Multiple Sinks (Pipeline)
 	var outputs []sink.Output
-	
+
 	// Console Sink
 	outputs = append(outputs, sink.NewConsoleOutput())
-	
+
 	// File Sink
 	if fo, err := sink.NewFileOutput("events.jsonl"); err == nil {
 		outputs = append(outputs, fo)
@@ -66,11 +66,11 @@ func main() {
 
 	// 5. Initialize Scanner
 	scanCfg := scanner.Config{
-		ChainID:      "ethereum",
-		Rewind:       10, // Start from 10 blocks ago
-		Interval:     5 * time.Second,
-		ReorgSafe:    2,
-		BatchSize:    10,
+		ChainID:   "ethereum",
+		Rewind:    10, // Start from 10 blocks ago
+		Interval:  5 * time.Second,
+		ReorgSafe: 2,
+		BatchSize: 10,
 	}
 
 	s := scanner.New(client, store, scanCfg, filter)

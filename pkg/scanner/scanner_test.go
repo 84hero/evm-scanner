@@ -89,7 +89,7 @@ func (m *MockRPC) Close() {
 func TestDetermineStartBlock(t *testing.T) {
 	store := new(MockStore)
 	client := new(MockRPC)
-	
+
 	// Case 1: Force Start
 	s := New(client, store, Config{ForceStart: true, StartBlock: 100}, nil)
 	start, err := s.DetermineStartBlockForTest(context.Background())
@@ -116,7 +116,7 @@ func TestDetermineStartBlock_Rewind(t *testing.T) {
 	// Case 4: No cursor, Rewind from Head
 	// Config: Rewind = 100
 	s := New(client, store, Config{ChainID: "eth", Rewind: 100}, nil)
-	
+
 	// Mock: LoadCursor -> 0 (Not found)
 	store.On("LoadCursor", "eth").Return(uint64(0), nil).Once()
 	// Mock: BlockNumber -> 1000
@@ -134,8 +134,8 @@ func TestScanner_Start_Errors(t *testing.T) {
 	client := new(MockRPC)
 
 	s := New(client, store, Config{
-		ChainID: "eth", 
-		Interval: 1 * time.Millisecond,
+		ChainID:   "eth",
+		Interval:  1 * time.Millisecond,
 		ReorgSafe: 0,
 		BatchSize: 1,
 	}, NewFilter())
@@ -220,7 +220,7 @@ func TestScanRange_Hit(t *testing.T) {
 	filter := NewFilter() // Empty filter matches everything
 
 	s := New(client, store, Config{BatchSize: 10}, filter)
-	
+
 	// Mock FilterLogs return
 	logs := []types.Log{{BlockNumber: 100}}
 	client.On("FilterLogs", mock.Anything, mock.MatchedBy(func(q ethereum.FilterQuery) bool {
@@ -253,7 +253,7 @@ func TestScanner_Start(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	store := new(MockStore)
 	client := new(MockRPC)
-	
+
 	// Mock process:
 	// 1. determineStartBlock -> Start from 100
 	store.On("LoadCursor", "eth").Return(uint64(100), nil)
@@ -269,8 +269,8 @@ func TestScanner_Start(t *testing.T) {
 	store.On("SaveCursor", "eth", mock.Anything).Return(nil)
 
 	s := New(client, store, Config{
-		ChainID: "eth", 
-		Interval: 10 * time.Millisecond, 
+		ChainID:   "eth",
+		Interval:  10 * time.Millisecond,
 		ReorgSafe: 3,
 		BatchSize: 10,
 	}, NewFilter())

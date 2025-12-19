@@ -10,7 +10,7 @@ import (
 
 func TestFilter_Builder(t *testing.T) {
 	f := NewFilter()
-	
+
 	addr1 := common.HexToAddress("0x1111")
 	addr2 := common.HexToAddress("0x2222")
 
@@ -57,7 +57,7 @@ func TestFilter_MatchesBloom(t *testing.T) {
 	// 1. Setup Bloom that contains addr1 and topic1
 	addr1 := common.HexToAddress("0x1111111111111111111111111111111111111111")
 	topic1 := common.HexToHash("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-	
+
 	bloom := types.Bloom{}
 	bloom.Add(addr1.Bytes())
 	bloom.Add(topic1.Bytes())

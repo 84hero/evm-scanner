@@ -18,7 +18,7 @@ type NodeConfig struct {
 	Priority int // Initial weight (1-100), higher is more preferred
 }
 
-// Node wraps the underlying ethclient and provides health monitoring
+// Node wraps the underlying ethclient and provides health monitoring and metric tracking.
 type Node struct {
 	config NodeConfig
 	client EthClient // Interface for underlying ethclient
@@ -149,8 +149,7 @@ func (n *Node) GetLatestBlock() uint64 {
 	return n.latestBlock
 }
 
-// Proxy Methods (implement Client interface)
-
+// BlockNumber retrieves the latest block height from the node
 func (n *Node) BlockNumber(ctx context.Context) (uint64, error) {
 	start := time.Now()
 	h, err := n.client.BlockNumber(ctx)
@@ -161,6 +160,7 @@ func (n *Node) BlockNumber(ctx context.Context) (uint64, error) {
 	return h, err
 }
 
+// ChainID retrieves the chain ID from the node
 func (n *Node) ChainID(ctx context.Context) (*big.Int, error) {
 	start := time.Now()
 	id, err := n.client.ChainID(ctx)
@@ -168,6 +168,7 @@ func (n *Node) ChainID(ctx context.Context) (*big.Int, error) {
 	return id, err
 }
 
+// HeaderByNumber retrieves a block header from the node
 func (n *Node) HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error) {
 	start := time.Now()
 	h, err := n.client.HeaderByNumber(ctx, number)
@@ -175,6 +176,7 @@ func (n *Node) HeaderByNumber(ctx context.Context, number *big.Int) (*types.Head
 	return h, err
 }
 
+// BlockByNumber retrieves a full block from the node
 func (n *Node) BlockByNumber(ctx context.Context, number *big.Int) (*types.Block, error) {
 	start := time.Now()
 	b, err := n.client.BlockByNumber(ctx, number)
@@ -182,6 +184,7 @@ func (n *Node) BlockByNumber(ctx context.Context, number *big.Int) (*types.Block
 	return b, err
 }
 
+// FilterLogs retrieves logs from the node based on the query
 func (n *Node) FilterLogs(ctx context.Context, q ethereum.FilterQuery) ([]types.Log, error) {
 	start := time.Now()
 	logs, err := n.client.FilterLogs(ctx, q)
@@ -189,6 +192,7 @@ func (n *Node) FilterLogs(ctx context.Context, q ethereum.FilterQuery) ([]types.
 	return logs, err
 }
 
+// CodeAt retrieves the contract code at a given address
 func (n *Node) CodeAt(ctx context.Context, account common.Address, blockNumber *big.Int) ([]byte, error) {
 	start := time.Now()
 	code, err := n.client.CodeAt(ctx, account, blockNumber)
@@ -196,6 +200,7 @@ func (n *Node) CodeAt(ctx context.Context, account common.Address, blockNumber *
 	return code, err
 }
 
+// Close closes the underlying RPC connection
 func (n *Node) Close() {
 	n.client.Close()
 }

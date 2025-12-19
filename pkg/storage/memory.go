@@ -24,6 +24,7 @@ type MemoryStore struct {
 	mu     sync.RWMutex
 }
 
+// NewMemoryStore initializes a new in-memory storage.
 func NewMemoryStore(prefix string) *MemoryStore {
 	return &MemoryStore{
 		data:   make(map[string]uint64),
@@ -31,12 +32,14 @@ func NewMemoryStore(prefix string) *MemoryStore {
 	}
 }
 
+// LoadCursor retrieves the last scanned block height from memory.
 func (m *MemoryStore) LoadCursor(key string) (uint64, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.data[m.prefix+key], nil
 }
 
+// SaveCursor updates the last scanned block height in memory.
 func (m *MemoryStore) SaveCursor(key string, height uint64) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -44,6 +47,7 @@ func (m *MemoryStore) SaveCursor(key string, height uint64) error {
 	return nil
 }
 
+// Close implements the Persistence interface.
 func (m *MemoryStore) Close() error {
 	return nil
 }

@@ -15,7 +15,7 @@ import (
 func main() {
 	// [Scenario] We are launching a new AppChain or L2 called "HeroChain"
 	// HeroChain has a fast 1-second block time and needs 50 confirmations for safety.
-	
+
 	// 1. Register the New Chain Preset
 	chain.Register("herochain", chain.Preset{
 		ChainID:   "888",
@@ -35,11 +35,11 @@ func main() {
 	preset, _ := chain.Get("herochain")
 
 	config := scanner.Config{
-		ChainID:      "herochain",
-		BatchSize:    preset.BatchSize, // Use value from preset
-		ReorgSafe:    preset.ReorgSafe, // Use value from preset
-		Interval:     preset.BlockTime, // Sync interval matches block time
-		UseBloom:     true,             // Enable bloom filter for performance
+		ChainID:   "herochain",
+		BatchSize: preset.BatchSize, // Use value from preset
+		ReorgSafe: preset.ReorgSafe, // Use value from preset
+		Interval:  preset.BlockTime, // Sync interval matches block time
+		UseBloom:  true,             // Enable bloom filter for performance
 	}
 
 	filter := scanner.NewFilter() // Scan all logs for demonstration
@@ -52,6 +52,6 @@ func main() {
 	})
 
 	fmt.Printf("Scanner configured for %s (Safety Window: %d blocks)\n", config.ChainID, config.ReorgSafe)
-	
+
 	// s.Start(ctx) // Execution omitted for demo purposes
 }

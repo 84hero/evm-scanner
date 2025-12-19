@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 )
 
+// Config holds configuration parameters for the Scanner.
 type Config struct {
 	ChainID string
 	// Startup strategy
@@ -25,8 +26,10 @@ type Config struct {
 	UseBloom  bool
 }
 
+// Handler is a callback function type for processing scanned logs.
 type Handler func(ctx context.Context, logs []types.Log) error
 
+// Scanner orchestrates the scanning of blocks and processing of logs.
 type Scanner struct {
 	client  rpc.Client
 	store   storage.Persistence
@@ -35,6 +38,7 @@ type Scanner struct {
 	handler Handler
 }
 
+// New creates and initializes a new Scanner instance.
 func New(client rpc.Client, store storage.Persistence, cfg Config, filter *Filter) *Scanner {
 	if cfg.BatchSize == 0 {
 		cfg.BatchSize = 100

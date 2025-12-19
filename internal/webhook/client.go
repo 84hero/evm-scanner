@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
+// Config holds configuration for the Webhook client.
 type Config struct {
 	URL            string        `mapstructure:"url"`
 	Secret         string        `mapstructure:"secret"`
@@ -50,7 +51,7 @@ func NewClient(cfg Config) *Client {
 	}
 }
 
-// Payload defines the data structure sent via webhook
+// Payload defines the data structure sent via webhook to consumers.
 type Payload struct {
 	Timestamp int64       `json:"timestamp"`
 	Logs      []types.Log `json:"logs"`
@@ -92,7 +93,7 @@ func (c *Client) Send(ctx context.Context, logs []types.Log) error {
 				return ctx.Err()
 			case <-timer.C:
 			}
-			
+
 			// Exponential backoff
 			backoff *= 2
 			if backoff > c.cfg.MaxBackoff {
@@ -104,7 +105,7 @@ func (c *Client) Send(ctx context.Context, logs []types.Log) error {
 		if err == nil {
 			return nil // Success
 		}
-		
+
 		lastErr = err
 		// For 4xx client errors (e.g., 400 Bad Request), retries usually don't help.
 		// Simplified logic: retry for network errors and 5xx.

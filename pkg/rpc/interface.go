@@ -25,22 +25,22 @@ type EthClient interface {
 type Client interface {
 	// ChainID retrieves the chain ID
 	ChainID(ctx context.Context) (*big.Int, error)
-	
+
 	// BlockNumber retrieves the latest block height
 	BlockNumber(ctx context.Context) (uint64, error)
-	
+
 	// HeaderByNumber retrieves a block header (used for fast Bloom Filter checks)
 	HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error)
-	
+
 	// BlockByNumber retrieves a full block (used for native transfer scanning)
 	BlockByNumber(ctx context.Context, number *big.Int) (*types.Block, error)
-	
+
 	// FilterLogs retrieves logs (used for ERC20 scanning)
 	FilterLogs(ctx context.Context, q ethereum.FilterQuery) ([]types.Log, error)
-	
+
 	// CodeAt checks contract code (used for safety validation)
 	CodeAt(ctx context.Context, account common.Address, blockNumber *big.Int) ([]byte, error)
-	
+
 	// Close closes the connection
 	Close()
 }

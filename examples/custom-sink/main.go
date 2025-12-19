@@ -54,7 +54,7 @@ func main() {
 		for i, l := range logs {
 			decoded[i] = sink.DecodedLog{Log: l}
 		}
-		
+
 		// Use our custom sink
 		return mySlackSink.Send(ctx, decoded)
 	})
