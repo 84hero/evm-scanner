@@ -1,9 +1,22 @@
 # EVM Scanner 🚀
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/84hero/evm-scanner)](https://goreportcard.com/report/github.com/84hero/evm-scanner)
-[![Build Status](https://github.com/84hero/evm-scanner/workflows/Test%20and%20Lint/badge.svg)](https://github.com/84hero/evm-scanner/actions)
-[![GoDoc](https://godoc.org/github.com/84hero/evm-scanner?status.svg)](https://godoc.org/github.com/84hero/evm-scanner)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<p align="center">
+  <a href="https://github.com/84hero/evm-scanner/actions/workflows/test.yml">
+    <img src="https://github.com/84hero/evm-scanner/actions/workflows/test.yml/badge.svg" alt="Build Status">
+  </a>
+  <a href="https://goreportcard.com/report/github.com/84hero/evm-scanner">
+    <img src="https://goreportcard.com/badge/github.com/84hero/evm-scanner" alt="Go Report Card">
+  </a>
+  <a href="https://pkg.go.dev/github.com/84hero/evm-scanner">
+    <img src="https://pkg.go.dev/badge/github.com/84hero/evm-scanner.svg" alt="Go Reference">
+  </a>
+  <a href="https://github.com/84hero/evm-scanner/releases">
+    <img src="https://img.shields.io/github/v/release/84hero/evm-scanner" alt="Release">
+  </a>
+  <a href="https://github.com/84hero/evm-scanner/blob/master/LICENSE">
+    <img src="https://img.shields.io/github/license/84hero/evm-scanner" alt="License">
+  </a>
+</p>
 
 **[English](README.md)** | **[简体中文](README_CN.md)**
 

@@ -15,7 +15,7 @@ import (
 func TestDecode(t *testing.T) {
 	// 1. Define standard ERC20 ABI
 	const abiJSON = `[{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"}]`
-	
+
 	// 2. Initialize Decoder
 	d, err := NewFromJSON(abiJSON)
 	assert.NoError(t, err)
@@ -29,7 +29,7 @@ func TestDecode(t *testing.T) {
 	// 4. Construct Log
 	// Indexed parameters go into Topics (Note: Address needs to be padded to 32 bytes)
 	// Non-indexed parameters (value) need ABI encoding into Data
-	
+
 	parsedABI, _ := abi.JSON(strings.NewReader(abiJSON))
 	// Pack only packs non-indexed arguments
 	// Transfer(from, to, value) -> only value is non-indexed in inputs
@@ -49,7 +49,7 @@ func TestDecode(t *testing.T) {
 	decoded, err := d.Decode(log)
 	assert.NoError(t, err)
 	assert.Equal(t, "Transfer", decoded.Name)
-	
+
 	// Verify fields
 	assert.Equal(t, sender, decoded.Inputs["from"])
 	assert.Equal(t, receiver, decoded.Inputs["to"])

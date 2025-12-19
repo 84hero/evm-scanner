@@ -16,9 +16,8 @@ import (
 	"golang.org/x/time/rate"
 )
 
-var (
-	ErrNoAvailableNodes = errors.New("no available rpc nodes")
-)
+// ErrNoAvailableNodes is returned when no RPC nodes are currently healthy or reachable.
+var ErrNoAvailableNodes = errors.New("no available rpc nodes")
 
 // MultiClient manages multiple RPC nodes, providing load balancing and failover
 type MultiClient struct {
@@ -115,7 +114,7 @@ func (mc *MultiClient) pickBestNode() *Node {
 	defer mc.mu.RUnlock()
 
 	globalH := atomic.LoadUint64(&mc.globalHeight)
-	
+
 	// Create a copy of candidates for sorting to avoid lock contention
 	candidates := make([]*Node, len(mc.nodes))
 	copy(candidates, mc.nodes)
@@ -169,13 +168,13 @@ func (mc *MultiClient) execute(ctx context.Context, op func(*Node) error) error 
 		if err == nil {
 			return nil
 		}
-		
+
 		lastErr = err
 		// If context is canceled, don't retry
 		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 			return err
 		}
-		
+
 		// If failed, the node score will automatically decrease via RecordMetric
 		// pickBestNode might select a different node in next attempt
 	}
@@ -183,8 +182,7 @@ func (mc *MultiClient) execute(ctx context.Context, op func(*Node) error) error 
 	return lastErr
 }
 
-// Implementation of Client interface
-
+// ChainID retrieves the chain ID from the best available node
 func (mc *MultiClient) ChainID(ctx context.Context) (*big.Int, error) {
 	var res *big.Int
 	err := mc.execute(ctx, func(n *Node) error {
@@ -195,6 +193,7 @@ func (mc *MultiClient) ChainID(ctx context.Context) (*big.Int, error) {
 	return res, err
 }
 
+// BlockNumber retrieves the latest block height across all nodes (cached if possible)
 func (mc *MultiClient) BlockNumber(ctx context.Context) (uint64, error) {
 	// Prefer cached global highest height
 	h := atomic.LoadUint64(&mc.globalHeight)
@@ -211,6 +210,7 @@ func (mc *MultiClient) BlockNumber(ctx context.Context) (uint64, error) {
 	return res, err
 }
 
+// HeaderByNumber retrieves a block header from the best available node
 func (mc *MultiClient) HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error) {
 	var res *types.Header
 	err := mc.execute(ctx, func(n *Node) error {
@@ -221,6 +221,7 @@ func (mc *MultiClient) HeaderByNumber(ctx context.Context, number *big.Int) (*ty
 	return res, err
 }
 
+// BlockByNumber retrieves a full block from the best available node
 func (mc *MultiClient) BlockByNumber(ctx context.Context, number *big.Int) (*types.Block, error) {
 	var res *types.Block
 	err := mc.execute(ctx, func(n *Node) error {
@@ -231,6 +232,7 @@ func (mc *MultiClient) BlockByNumber(ctx context.Context, number *big.Int) (*typ
 	return res, err
 }
 
+// FilterLogs retrieves logs from the best available node based on the query
 func (mc *MultiClient) FilterLogs(ctx context.Context, q ethereum.FilterQuery) ([]types.Log, error) {
 	var res []types.Log
 	err := mc.execute(ctx, func(n *Node) error {
@@ -241,6 +243,7 @@ func (mc *MultiClient) FilterLogs(ctx context.Context, q ethereum.FilterQuery) (
 	return res, err
 }
 
+// CodeAt retrieves the contract code at a given address from the best available node
 func (mc *MultiClient) CodeAt(ctx context.Context, account common.Address, blockNumber *big.Int) ([]byte, error) {
 	var res []byte
 	err := mc.execute(ctx, func(n *Node) error {
@@ -251,6 +254,7 @@ func (mc *MultiClient) CodeAt(ctx context.Context, account common.Address, block
 	return res, err
 }
 
+// Close closes all underlying RPC connections
 func (mc *MultiClient) Close() {
 	for _, n := range mc.nodes {
 		n.Close()

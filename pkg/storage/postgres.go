@@ -35,7 +35,7 @@ func NewPostgresStore(connStr string, tablePrefix string) (*PostgresStore, error
 		db:        db,
 		tableName: tableName,
 	}
-	
+
 	if err := store.initTable(); err != nil {
 		return nil, err
 	}
@@ -56,6 +56,7 @@ func (p *PostgresStore) initTable() error {
 	return err
 }
 
+// LoadCursor retrieves the last scanned block height for a given task key
 func (p *PostgresStore) LoadCursor(key string) (uint64, error) {
 	var height uint64
 	query := fmt.Sprintf("SELECT block_height FROM %s WHERE task_key = $1", p.tableName)
@@ -69,6 +70,7 @@ func (p *PostgresStore) LoadCursor(key string) (uint64, error) {
 	return height, nil
 }
 
+// SaveCursor updates or inserts the last scanned block height for a given task key
 func (p *PostgresStore) SaveCursor(key string, height uint64) error {
 	// Upsert using Postgres ON CONFLICT syntax
 	query := fmt.Sprintf(`
@@ -81,6 +83,7 @@ func (p *PostgresStore) SaveCursor(key string, height uint64) error {
 	return err
 }
 
+// Close closes the database connection
 func (p *PostgresStore) Close() error {
 	return p.db.Close()
 }

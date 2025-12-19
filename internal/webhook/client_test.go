@@ -19,7 +19,7 @@ import (
 
 func TestWebhookSend(t *testing.T) {
 	secret := "my-secret"
-	
+
 	// 1. Create Mock server
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Validate Headers
@@ -76,7 +76,7 @@ func TestWebhook_Retry(t *testing.T) {
 		InitialBackoff: 1 * time.Millisecond,
 		MaxBackoff:     5 * time.Millisecond,
 	})
-	
+
 	logs := []types.Log{{Index: 1}}
 	err := client.Send(context.Background(), logs)
 	assert.NoError(t, err)

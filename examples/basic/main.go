@@ -72,20 +72,20 @@ func main() {
 	// 4. Build filter
 	usdtAddress := common.HexToAddress("0xdAC17F958D2ee523a2206206994597C13D831ec7")
 	transferTopic := crypto.Keccak256Hash([]byte("Transfer(address,address,uint256)"))
-	
+
 	filter := scanner.NewFilter().
 		AddContract(usdtAddress).
 		SetTopic(0, transferTopic)
 
 	// 5. Configure Storage [Feature 2: Multiple Storage Engine Support]
 	var store storage.Persistence
-	
+
 	// Storage Prefix (Namespace): Prioritize storage_prefix from config, otherwise use Project name
 	storePrefix := cfg.Scanner.StoragePrefix
 	if storePrefix == "" {
 		storePrefix = cfg.Project + "_"
 	}
-	
+
 	if dbURL := os.Getenv("PG_URL"); dbURL != "" {
 		// PostgreSQL
 		pgStore, err := storage.NewPostgresStore(dbURL, storePrefix)
@@ -113,15 +113,15 @@ func main() {
 
 	// 6. Initialize Scanner
 	scanCfg := scanner.Config{
-		ChainID:       cfg.Scanner.ChainID,
-		StartBlock:    cfg.Scanner.StartBlock,
-		ForceStart:    cfg.Scanner.ForceStart,
-		Rewind:        cfg.Scanner.Rewind,
-		CursorRewind:  cfg.Scanner.CursorRewind,
-		BatchSize:     cfg.Scanner.BatchSize,
-		Interval:      cfg.Scanner.Interval,
-		ReorgSafe:     cfg.Scanner.Confirmations, // Using merged preset values
-		UseBloom:      cfg.Scanner.UseBloom,
+		ChainID:      cfg.Scanner.ChainID,
+		StartBlock:   cfg.Scanner.StartBlock,
+		ForceStart:   cfg.Scanner.ForceStart,
+		Rewind:       cfg.Scanner.Rewind,
+		CursorRewind: cfg.Scanner.CursorRewind,
+		BatchSize:    cfg.Scanner.BatchSize,
+		Interval:     cfg.Scanner.Interval,
+		ReorgSafe:    cfg.Scanner.Confirmations, // Using merged preset values
+		UseBloom:     cfg.Scanner.UseBloom,
 	}
 
 	s := scanner.New(client, store, scanCfg, filter)
@@ -137,7 +137,7 @@ func main() {
 			}
 
 			// Print human-readable data
-			fmt.Printf(" [Event] %s | Block: %d | From: %v | To: %v | Value: %v\n", 
+			fmt.Printf(" [Event] %s | Block: %d | From: %v | To: %v | Value: %v\n",
 				decoded.Name,
 				l.BlockNumber,
 				decoded.Inputs["from"],

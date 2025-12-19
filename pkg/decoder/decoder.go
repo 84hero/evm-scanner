@@ -8,7 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-// ABIWrapper wraps the decoding logic
+// ABIWrapper wraps the decoding logic using go-ethereum's ABI parser.
 type ABIWrapper struct {
 	parsedABI abi.ABI
 }
@@ -22,7 +22,7 @@ func NewFromJSON(jsonStr string) (*ABIWrapper, error) {
 	return &ABIWrapper{parsedABI: parsed}, nil
 }
 
-// DecodedLog contains parsed human-readable data
+// DecodedLog contains parsed human-readable data from a transaction log.
 type DecodedLog struct {
 	Name   string                 // Event name (e.g., Transfer)
 	Inputs map[string]interface{} // Parameter key-value pairs (e.g., from: 0x..., value: 100)

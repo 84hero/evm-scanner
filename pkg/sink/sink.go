@@ -19,7 +19,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// DecodedLog wraps raw log and its decoded result
+// DecodedLog wraps raw log and its decoded result for structured output.
 type DecodedLog struct {
 	Log         types.Log           `json:"log"`
 	DecodedData *decoder.DecodedLog `json:"decoded,omitempty"`
@@ -35,6 +35,7 @@ type Output interface {
 
 // --- 1. Webhook Output ---
 
+// WebhookOutput implements the Output interface for sending events to a web service.
 type WebhookOutput struct {
 	client   *webhook.Client
 	async    bool
@@ -44,6 +45,7 @@ type WebhookOutput struct {
 	closedMu sync.Mutex
 }
 
+// WebhookConfig holds the configuration for WebhookOutput.
 type WebhookConfig struct {
 	URL            string
 	Secret         string
@@ -55,6 +57,7 @@ type WebhookConfig struct {
 	Workers        int
 }
 
+// NewWebhookOutput initializes a new Webhook output sink.
 func NewWebhookOutput(url, secret string, maxAttempts int, initialBackoff, maxBackoff string, async bool, bufferSize, workers int) *WebhookOutput {
 	// Duration conversion logic is handled at the application layer.
 	// We receive basic types or a config here.
@@ -136,12 +139,14 @@ func (w *WebhookOutput) Close() error {
 
 // --- 2. File Output ---
 
+// FileOutput implements the Output interface for writing events to a file.
 type FileOutput struct {
 	path string
 	mu   sync.Mutex
 	file *os.File
 }
 
+// NewFileOutput initializes a new file-based output sink.
 func NewFileOutput(path string) (*FileOutput, error) {
 	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -173,6 +178,7 @@ func (f *FileOutput) Close() error {
 
 // --- 3. Console Output ---
 
+// ConsoleOutput implements the Output interface for printing events to stdout.
 type ConsoleOutput struct {
 	mu sync.Mutex
 }
@@ -199,11 +205,13 @@ func (c *ConsoleOutput) Close() error { return nil }
 
 // --- 4. PostgreSQL Output ---
 
+// PostgresOutput implements the Output interface for saving events to PostgreSQL.
 type PostgresOutput struct {
 	db    *sql.DB
 	table string
 }
 
+// NewPostgresOutput initializes a new PostgreSQL output sink.
 func NewPostgresOutput(url, table string) (*PostgresOutput, error) {
 	if match, _ := regexp.MatchString("^[a-zA-Z0-9_]+$", table); !match {
 		return nil, fmt.Errorf("invalid table name: %s", table)
@@ -268,12 +276,14 @@ func (p *PostgresOutput) Close() error { return p.db.Close() }
 
 // --- 5. Redis Output ---
 
+// RedisOutput implements the Output interface for sending events to Redis.
 type RedisOutput struct {
 	client *redis.Client
 	key    string
 	mode   string
 }
 
+// NewRedisOutput initializes a new Redis output sink.
 func NewRedisOutput(addr, password string, db int, key, mode string) (*RedisOutput, error) {
 	rdb := redis.NewClient(&redis.Options{Addr: addr, Password: password, DB: db})
 	if err := rdb.Ping(context.Background()).Err(); err != nil {
@@ -302,11 +312,13 @@ func (r *RedisOutput) Close() error { return r.client.Close() }
 
 // --- 6. Kafka Output ---
 
+// KafkaOutput implements the Output interface for sending events to Kafka.
 type KafkaOutput struct {
 	producer sarama.SyncProducer
 	topic    string
 }
 
+// NewKafkaOutput initializes a new Kafka output sink.
 func NewKafkaOutput(brokers []string, topic, user, password string) (*KafkaOutput, error) {
 	config := sarama.NewConfig()
 	config.Producer.Return.Successes = true
@@ -341,6 +353,7 @@ func (k *KafkaOutput) Close() error { return k.producer.Close() }
 
 // --- 7. RabbitMQ Output ---
 
+// RabbitMQOutput implements the Output interface for sending events to RabbitMQ.
 type RabbitMQOutput struct {
 	conn       *amqp.Connection
 	ch         *amqp.Channel
@@ -348,6 +361,7 @@ type RabbitMQOutput struct {
 	routingKey string
 }
 
+// NewRabbitMQOutput initializes a new RabbitMQ output sink.
 func NewRabbitMQOutput(url, exchange, routingKey, queueName string, durable bool) (*RabbitMQOutput, error) {
 	conn, err := amqp.Dial(url)
 	if err != nil {
@@ -361,16 +375,22 @@ func NewRabbitMQOutput(url, exchange, routingKey, queueName string, durable bool
 	if exchange != "" {
 		err = ch.ExchangeDeclare(exchange, "topic", durable, false, false, false, nil)
 		if err != nil {
-			ch.Close(); conn.Close(); return nil, err
+			ch.Close()
+			conn.Close()
+			return nil, err
 		}
 	}
 	if queueName != "" {
 		q, err := ch.QueueDeclare(queueName, durable, false, false, false, nil)
 		if err != nil {
-			ch.Close(); conn.Close(); return nil, err
+			ch.Close()
+			conn.Close()
+			return nil, err
 		}
 		if err := ch.QueueBind(q.Name, routingKey, exchange, false, nil); err != nil {
-			ch.Close(); conn.Close(); return nil, err
+			ch.Close()
+			conn.Close()
+			return nil, err
 		}
 	}
 	return &RabbitMQOutput{conn: conn, ch: ch, exchange: exchange, routingKey: routingKey}, nil
