@@ -46,3 +46,6 @@ config.yaml
 app.yaml
 !config.yaml.example
 !app.yaml.example
+# Temporary documentation and test files
+.temp_docs/
+*.backup

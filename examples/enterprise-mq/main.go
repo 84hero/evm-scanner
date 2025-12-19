@@ -23,7 +23,7 @@ func main() {
 	defer cancel()
 
 	// 1. Setup RPC
-	client, _ := rpc.NewClient(ctx, []rpc.NodeConfig{{URL: "https://rpc.ankr.com/eth"}}, 5)
+	client, _ := rpc.NewClient(ctx, []rpc.NodeConfig{{URL: "https://rpc.ankr.com/eth"}})
 	store := storage.NewMemoryStore("mq_demo_")
 
 	// 2. Initialize Kafka Sink (Requires a running Kafka broker)

@@ -29,7 +29,7 @@ func main() {
 	defer cancel()
 
 	// 1. Init RPC
-	client, _ := rpc.NewClient(ctx, []rpc.NodeConfig{{URL: "https://rpc.ankr.com/eth"}}, 5)
+	client, _ := rpc.NewClient(ctx, []rpc.NodeConfig{{URL: "https://rpc.ankr.com/eth"}})
 
 	// 2. Init Postgres Storage (for progress tracking)
 	// This will create a 'cursors' table with prefix 'demo_'
