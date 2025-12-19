@@ -13,24 +13,24 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"golang.org/x/time/rate"
 )
 
-// ErrNoAvailableNodes is returned when no RPC nodes are currently healthy or reachable.
-var ErrNoAvailableNodes = errors.New("no available rpc nodes")
+// Error definitions
+var (
+	ErrNoAvailableNodes  = errors.New("no available rpc nodes")
+	ErrNoNodeMeetsHeight = errors.New("no node meets the required block height")
+)
 
 // MultiClient manages multiple RPC nodes, providing load balancing and failover
 type MultiClient struct {
 	nodes        []*Node
 	globalHeight uint64
-	limiter      *rate.Limiter
 
 	mu sync.RWMutex
 }
 
 // NewClient initializes a multi-node client
-// limit: maximum requests per second (RPS)
-func NewClient(ctx context.Context, configs []NodeConfig, limit int) (*MultiClient, error) {
+func NewClient(ctx context.Context, configs []NodeConfig) (*MultiClient, error) {
 	if len(configs) == 0 {
 		return nil, errors.New("no rpc configs provided")
 	}
@@ -46,18 +46,17 @@ func NewClient(ctx context.Context, configs []NodeConfig, limit int) (*MultiClie
 		nodes = append(nodes, n)
 	}
 
-	return NewClientWithNodes(ctx, nodes, limit)
+	return NewClientWithNodes(ctx, nodes)
 }
 
 // NewClientWithNodes initializes MultiClient with existing nodes (for testing or advanced usage)
-func NewClientWithNodes(ctx context.Context, nodes []*Node, limit int) (*MultiClient, error) {
+func NewClientWithNodes(ctx context.Context, nodes []*Node) (*MultiClient, error) {
 	if len(nodes) == 0 {
 		return nil, errors.New("failed to connect to any rpc node")
 	}
 
 	mc := &MultiClient{
-		nodes:   nodes,
-		limiter: rate.NewLimiter(rate.Limit(limit), limit),
+		nodes: nodes,
 	}
 
 	// Start background sync task to update node heights and status every 5 seconds
@@ -144,13 +143,8 @@ func (mc *MultiClient) pickBestNode() *Node {
 	return top1
 }
 
-// execute performs an RPC request with retry logic
+// execute performs an RPC request with retry logic and auto node switching
 func (mc *MultiClient) execute(ctx context.Context, op func(*Node) error) error {
-	// Global rate limiting
-	if err := mc.limiter.Wait(ctx); err != nil {
-		return err
-	}
-
 	// Max attempts = number of nodes (capped at 3 to avoid long loops)
 	attempts := len(mc.nodes)
 	if attempts > 3 {
@@ -159,12 +153,16 @@ func (mc *MultiClient) execute(ctx context.Context, op func(*Node) error) error 
 
 	var lastErr error
 	for i := 0; i < attempts; i++ {
-		node := mc.pickBestNode()
-		if node == nil {
-			return ErrNoAvailableNodes
+		// Pick an available node (with auto-switching)
+		node, err := mc.pickAvailableNode(ctx)
+		if err != nil {
+			return err
 		}
 
-		err := op(node)
+		// Release node after use
+		defer node.Release()
+
+		err = op(node)
 		if err == nil {
 			return nil
 		}
@@ -176,7 +174,7 @@ func (mc *MultiClient) execute(ctx context.Context, op func(*Node) error) error 
 		}
 
 		// If failed, the node score will automatically decrease via RecordMetric
-		// pickBestNode might select a different node in next attempt
+		// pickAvailableNode might select a different node in next attempt
 	}
 
 	return lastErr
@@ -259,4 +257,82 @@ func (mc *MultiClient) Close() {
 	for _, n := range mc.nodes {
 		n.Close()
 	}
+}
+
+// pickAvailableNode selects an available node with auto-switching
+func (mc *MultiClient) pickAvailableNode(ctx context.Context) (*Node, error) {
+	return mc.pickAvailableNodeWithHeight(ctx, 0)
+}
+
+// pickAvailableNodeWithHeight selects a node that meets the height requirement
+func (mc *MultiClient) pickAvailableNodeWithHeight(ctx context.Context, requiredHeight uint64) (*Node, error) {
+	mc.mu.RLock()
+	globalH := atomic.LoadUint64(&mc.globalHeight)
+
+	// Create a copy of candidates for sorting
+	candidates := make([]*Node, len(mc.nodes))
+	copy(candidates, mc.nodes)
+	mc.mu.RUnlock()
+
+	if len(candidates) == 0 {
+		return nil, ErrNoAvailableNodes
+	}
+
+	// Sort by score in descending order
+	sort.Slice(candidates, func(i, j int) bool {
+		return candidates[i].Score(globalH) > candidates[j].Score(globalH)
+	})
+
+	// Try to acquire an available node (with auto-switching)
+	for _, node := range candidates {
+		// 1. Check height requirement
+		if requiredHeight > 0 && !node.MeetsHeightRequirement(requiredHeight) {
+			continue // Skip nodes that don't meet height requirement
+		}
+
+		// 2. Try to acquire the node (non-blocking)
+		err := node.TryAcquire(ctx)
+		if err == nil {
+			return node, nil // Found an available node
+		}
+		// If node is busy/rate-limited/circuit-broken, try next node
+	}
+
+	// All nodes are unavailable, block and wait for the best node
+	bestNode := candidates[0]
+
+	// If best node is circuit-broken, return error
+	if bestNode.IsCircuitBroken() {
+		return nil, ErrNoAvailableNodes
+	}
+
+	// If height requirement not met, return error
+	if requiredHeight > 0 && !bestNode.MeetsHeightRequirement(requiredHeight) {
+		return nil, ErrNoNodeMeetsHeight
+	}
+
+	// Otherwise, block and wait for the best node
+	return mc.waitForNode(ctx, bestNode)
+}
+
+// waitForNode blocks until the node becomes available
+func (mc *MultiClient) waitForNode(ctx context.Context, node *Node) (*Node, error) {
+	// QPS rate limiting (blocking wait)
+	if node.limiter != nil {
+		if err := node.limiter.Wait(ctx); err != nil {
+			return nil, err
+		}
+	}
+
+	// Concurrency control (blocking wait)
+	if node.semaphore != nil {
+		select {
+		case node.semaphore <- struct{}{}:
+			return node, nil
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+	}
+
+	return node, nil
 }
