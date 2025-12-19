@@ -18,12 +18,12 @@ func TestNodeScore(t *testing.T) {
 	n := &Node{
 		config: NodeConfig{Priority: 10},
 	}
-	
+
 	// Initial score: 10 * 100 = 1000
 	assert.Equal(t, int64(1000), n.Score(0))
 
 	// Simulate latency (no errors recorded)
-	n.RecordMetric(time.Now().Add(-100*time.Millisecond), nil) 
+	n.RecordMetric(time.Now().Add(-100*time.Millisecond), nil)
 	// Latency update: (old=0) -> set to 100.
 	// Score: 1000 - (100/10) = 990
 	assert.Equal(t, int64(990), n.Score(0))
@@ -58,8 +58,8 @@ func TestMultiClient_Failover(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, uint64(100), h)
 
-	// Check metrics: Node 1 should have errors
-	assert.Equal(t, uint64(1), node1.GetTotalErrors())
+	// Check metrics: Node 1 should have at least 1 error (from background sync or manual call)
+	assert.GreaterOrEqual(t, node1.GetTotalErrors(), uint64(1))
 }
 
 func TestNode_ScoreLag(t *testing.T) {
@@ -77,7 +77,7 @@ func TestExecute_RetryLimit(t *testing.T) {
 	mockEth := new(MockEthClient)
 	// Fail 3 times. Also allow background sync calls.
 	mockEth.On("BlockNumber", mock.Anything).Return(uint64(0), errors.New("fail")).Maybe()
-	
+
 	node := NewNodeWithClient(NodeConfig{URL: "node1", Priority: 10}, mockEth)
 	mc, _ := NewClientWithNodes(ctx, []*Node{node}, 100)
 
@@ -89,7 +89,7 @@ func TestExecute_ContextCanceled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	mockEth := new(MockEthClient)
 	mockEth.On("BlockNumber", mock.Anything).Return(uint64(100), nil).Maybe()
-	
+
 	node := NewNodeWithClient(NodeConfig{URL: "node1", Priority: 10}, mockEth)
 	mc, _ := NewClientWithNodes(ctx, []*Node{node}, 100)
 
@@ -102,7 +102,7 @@ func TestExecute_ContextCanceled(t *testing.T) {
 func TestProxyMethods(t *testing.T) {
 	ctx := context.Background()
 	mockEth := new(MockEthClient)
-	
+
 	// Expect background sync calls (immediate one)
 	mockEth.On("BlockNumber", mock.Anything).Return(uint64(100), nil).Maybe()
 
@@ -150,7 +150,7 @@ func TestProxyMethods(t *testing.T) {
 func TestNewClient_Errors(t *testing.T) {
 	_, err := NewClient(context.Background(), []NodeConfig{}, 10)
 	assert.Error(t, err)
-	
+
 	_, err = NewClientWithNodes(context.Background(), []*Node{}, 10)
 	assert.Error(t, err)
 }
@@ -170,4 +170,3 @@ func TestNodeGetters(t *testing.T) {
 	assert.Equal(t, "http://test", n.URL())
 	assert.Equal(t, 5, n.Priority())
 }
-
