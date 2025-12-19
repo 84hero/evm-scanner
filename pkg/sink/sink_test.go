@@ -191,7 +191,7 @@ func TestPostgresOutput_Send(t *testing.T) {
 
 	logs := []DecodedLog{
 		{
-			Log: types.Log{BlockNumber: 100, TxHash: common.HexToHash("0xabc"), Index: 1},
+			Log:       types.Log{BlockNumber: 100, TxHash: common.HexToHash("0xabc"), Index: 1},
 			EventName: "Transfer",
 		},
 	}
@@ -207,12 +207,29 @@ func TestPostgresOutput_Send(t *testing.T) {
 }
 
 func TestWebhookOutput_Async(t *testing.T) {
-	wo := NewWebhookOutput("http://localhost", "secret", 1, "1s", "10s", true, 10, 1)
+	called := make(chan bool, 1)
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called <- true
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	wo := NewWebhookOutput(ts.URL, "secret", 1, "1s", "10s", true, 10, 1)
 	logs := []DecodedLog{{Log: types.Log{Index: 1}}}
+
 	start := time.Now()
 	err := wo.Send(context.Background(), logs)
 	assert.NoError(t, err)
+	// Must return immediately in async mode
 	assert.Less(t, time.Since(start), 100*time.Millisecond)
+
+	// Wait for background worker to deliver
+	select {
+	case <-called:
+	case <-time.After(1 * time.Second):
+		t.Fatal("Async webhook was never delivered")
+	}
+
 	err = wo.Close()
 	assert.NoError(t, err)
 }
