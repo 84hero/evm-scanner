@@ -20,14 +20,18 @@
 
 **[English](README.md)** | **[简体中文](README_CN.md)**
 
-A high-performance, industrial-grade EVM event scanning and indexing framework. Built for developers who need reliable, real-time access to blockchain data without the overhead of complex indexing solutions.
+A node-less, production-ready EVM blockchain scanner written in Go.  
+Reliable event & transaction ingestion via multi-RPC load balancing, failover, and extensible sinks (Postgres, Redis, Kafka, Webhooks).
 
-[Features](#-features) • [Installation](#-installation) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Contributing](#-contributing)
+**Designed for event-driven Web3 backends.** Focuses on **what happened on-chain**, not global state reconstruction.
+
+[Features](#-features) • [Architecture](#-architecture--design) • [Installation](#-installation) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Contributing](#-contributing)
 
 ---
 
 ## 🌟 Features
 
+-   **🌐 Node-less Architecture**: Works with multiple public RPC endpoints—no private nodes required.
 -   **⛓️ Multi-Chain Native**: Optimized for Ethereum, BSC, Polygon, Arbitrum, and any EVM-compatible network.
 -   **💾 Pluggable Storage**: Choose your persistence layer—**Memory** (dev), **Redis** (performance), or **PostgreSQL** (durability).
 -   **🚀 High Performance**: 
@@ -35,8 +39,139 @@ A high-performance, industrial-grade EVM event scanning and indexing framework. 
     -   **Bloom Filter Support**: Leverages node-level filtering for massive speed gains.
     -   **Worker Pool**: Parallel output processing (sinks) for high-throughput environments.
 -   **🔌 Rich Ecosystem (Sinks)**: Stream data directly to **Webhooks**, **Kafka**, **RabbitMQ**, **Redis**, **PostgreSQL**, or flat files.
--   **🛡️ Production Ready**: Automatic reorg handling with configurable safety windows and cursor management.
+-   **🛡️ Production Ready**: 
+    -   **Reorg-Tolerant**: Automatic reorg handling with configurable safety windows.
+    -   **Multi-RPC Failover**: Load balancing and automatic failover across RPC endpoints.
+    -   **Cursor Management**: Reliable progress tracking and resumable scanning.
 -   **💎 Human Readable**: Built-in ABI decoding turns raw hex logs into structured JSON data automatically.
+
+---
+
+## 🏗️ Architecture & Design
+
+### Design Philosophy
+
+`evm-scanner` is intentionally designed as an **event scanner**, not a full blockchain indexer.
+
+**Its responsibilities:**
+- Sequentially scanning blocks
+- Parsing transactions and logs
+- Decoding ABI-based events
+- Delivering events to downstream systems reliably
+
+**It does NOT do:**
+- Balance indexing
+- Address history indexing
+- State reconstruction
+- Wallet or explorer APIs
+
+This strict separation ensures clarity of responsibility, reliability, and predictable behavior in production environments.
+
+---
+
+### High-Level Architecture
+
+```mermaid
+flowchart LR
+    subgraph Blockchain
+        A[EVM Chain]
+    end
+
+    subgraph RPC
+        R1[Public RPC #1]
+        R2[Public RPC #2]
+        R3[Public RPC #3]
+    end
+
+    subgraph Scanner
+        S[evm-scanner]
+    end
+
+    subgraph Delivery
+        W[Webhook]
+        Q[MQ / Kafka]
+        D[Database]
+    end
+
+    A --> R1
+    A --> R2
+    A --> R3
+
+    R1 --> S
+    R2 --> S
+    R3 --> S
+
+    S --> W
+    S --> Q
+    S --> D
+```
+
+---
+
+### Why Balances Are Out of Scope
+
+Balance is **state**, not an event. Correct balance tracking requires:
+- Full state indexing
+- Internal transaction tracing
+- Reorg-aware state reconciliation
+
+`evm-scanner` reports **what happened**, not **global blockchain state**.  
+For balance queries, please use multicall / frontend / BFF layers.
+
+---
+
+### Block Finality & Reorg Handling
+
+To ensure reliability without private nodes:
+- Multiple public RPC endpoints
+- Automatic failover and retry
+- Confirmation-based scanning
+- Only finalized blocks are processed
+
+This makes the scanner resilient to temporary RPC inconsistencies and short reorgs.
+
+---
+
+### Why Public RPCs Are Enough
+
+`evm-scanner` does **not** require private or archive nodes. It only consumes finalized block data and logs.  
+Multiple public RPC endpoints are sufficient for production-grade event scanning in most scenarios.
+
+---
+
+### Operational Characteristics
+
+- Stateless scanning logic
+- Horizontal scalability
+- Low infrastructure cost
+- No node maintenance
+- Clear failure boundaries
+
+The scanner can be restarted, redeployed, or horizontally scaled without complex state recovery.
+
+---
+
+### Summary
+
+> **`evm-scanner` answers:**  
+> "What happened on-chain?"
+
+> **It deliberately does not answer:**  
+> "What is the global blockchain state right now?"
+
+This design choice keeps the project lightweight, reliable, and production-friendly.
+
+---
+
+## 💡 Use Cases
+
+- Payment & deposit monitoring
+- Webhook notifications
+- Event-driven backends
+- DeFi / GameFi triggers
+- Data pipelines (Kafka / MQ)
+
+---
 
 ## 📦 Installation
 
@@ -176,6 +311,15 @@ Contributions are what make the open source community such an amazing place to l
 ## 📄 License
 
 Distributed under the MIT License. See `LICENSE` for more information.
+
+---
+
+## 📚 References & Links
+
+- [Ethereum JSON-RPC Documentation](https://ethereum.org/en/developers/docs/apis/json-rpc/)
+- [Go Ethereum SDK](https://pkg.go.dev/github.com/ethereum/go-ethereum)
+- [Multicall3 Contract](https://github.com/makerdao/multicall)
+- [evm-scanner GitHub Repository](https://github.com/84hero/evm-scanner)
 
 ---
 Built with ❤️ for the Web3 Community.
