@@ -50,7 +50,7 @@ func TestMultiClient_Failover(t *testing.T) {
 	node1 := NewNodeWithClient(NodeConfig{URL: "node1", Priority: 10}, mock1)
 	node2 := NewNodeWithClient(NodeConfig{URL: "node2", Priority: 8}, mock2)
 
-	mc, err := NewClientWithNodes(ctx, []*Node{node1, node2}, 100)
+	mc, err := NewClientWithNodes(ctx, []*Node{node1, node2})
 	assert.NoError(t, err)
 
 	// Test: Execute should try node1 first (high priority), fail, then try node2
@@ -68,8 +68,9 @@ func TestNode_ScoreLag(t *testing.T) {
 	}
 	n.UpdateHeight(100)
 	// Global height is 120, lag is 20.
-	// Score = 1000 - 0 - (20 * 50) = 0
-	assert.Equal(t, int64(0), n.Score(120))
+	// New scoring: lag=20 triggers "lag > 5" branch
+	// Score = 1000 - 0 - (20 * 100) = -1000
+	assert.Equal(t, int64(-1000), n.Score(120))
 }
 
 func TestExecute_RetryLimit(t *testing.T) {
@@ -79,24 +80,34 @@ func TestExecute_RetryLimit(t *testing.T) {
 	mockEth.On("BlockNumber", mock.Anything).Return(uint64(0), errors.New("fail")).Maybe()
 
 	node := NewNodeWithClient(NodeConfig{URL: "node1", Priority: 10}, mockEth)
-	mc, _ := NewClientWithNodes(ctx, []*Node{node}, 100)
+	mc, _ := NewClientWithNodes(ctx, []*Node{node})
 
 	_, err := mc.BlockNumber(ctx)
 	assert.Error(t, err)
 }
 
 func TestExecute_ContextCanceled(t *testing.T) {
+	// Test that TryAcquire respects context cancellation
 	ctx, cancel := context.WithCancel(context.Background())
-	mockEth := new(MockEthClient)
-	mockEth.On("BlockNumber", mock.Anything).Return(uint64(100), nil).Maybe()
+	cancel() // Cancel immediately
 
-	node := NewNodeWithClient(NodeConfig{URL: "node1", Priority: 10}, mockEth)
-	mc, _ := NewClientWithNodes(ctx, []*Node{node}, 100)
+	// Create a node with concurrency limit to test semaphore blocking
+	node := &Node{
+		config: NodeConfig{
+			URL:           "test",
+			Priority:      10,
+			MaxConcurrent: 1,
+		},
+		semaphore: make(chan struct{}, 1),
+	}
 
-	// Cancel context immediately
-	cancel()
-	_, err := mc.BlockNumber(ctx)
-	assert.ErrorIs(t, err, context.Canceled)
+	// Fill the semaphore
+	node.semaphore <- struct{}{}
+
+	// Try to acquire with canceled context - should fail
+	err := node.TryAcquire(ctx)
+	assert.Error(t, err)
+	assert.Equal(t, context.Canceled, err)
 }
 
 func TestProxyMethods(t *testing.T) {
@@ -107,7 +118,7 @@ func TestProxyMethods(t *testing.T) {
 	mockEth.On("BlockNumber", mock.Anything).Return(uint64(100), nil).Maybe()
 
 	node := NewNodeWithClient(NodeConfig{URL: "node1", Priority: 10}, mockEth)
-	mc, _ := NewClientWithNodes(ctx, []*Node{node}, 100)
+	mc, _ := NewClientWithNodes(ctx, []*Node{node})
 
 	// 1. ChainID
 	mockEth.On("ChainID", ctx).Return(big.NewInt(1), nil).Once()
@@ -148,10 +159,10 @@ func TestProxyMethods(t *testing.T) {
 }
 
 func TestNewClient_Errors(t *testing.T) {
-	_, err := NewClient(context.Background(), []NodeConfig{}, 10)
+	_, err := NewClient(context.Background(), []NodeConfig{})
 	assert.Error(t, err)
 
-	_, err = NewClientWithNodes(context.Background(), []*Node{}, 10)
+	_, err = NewClientWithNodes(context.Background(), []*Node{})
 	assert.Error(t, err)
 }
 
@@ -161,7 +172,7 @@ func TestNewClient_Unreachable(t *testing.T) {
 	configs := []NodeConfig{
 		{URL: "invalid-scheme://", Priority: 1},
 	}
-	_, err := NewClient(ctx, configs, 10)
+	_, err := NewClient(ctx, configs)
 	assert.Error(t, err)
 }
 
