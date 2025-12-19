@@ -96,18 +96,44 @@ scanner:
 # RPC 节点池
 # 支持多节点高可用，按优先级自动故障转移
 rpc_nodes:
-  # 主节点（优先级最高）
+  # 主节点（付费节点，高性能）
   - url: "https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY"
     priority: 10
+    rate_limit: 25        # 每秒最大请求数（QPS）
+    max_concurrent: 10    # 最大并发请求数
   
-  # 备用节点
+  # 备用节点（免费节点）
   - url: "https://rpc.ankr.com/eth"
     priority: 5
+    rate_limit: 10
+    max_concurrent: 5
+  
+  # 备用节点 2
+  - url: "https://1rpc.io/eth"
+    priority: 1
+    rate_limit: 5
+    max_concurrent: 3
 ```
 
-**优先级说明：**
-- 数字越大，优先级越高
-- 主节点故障时，自动切换到次优先级节点
+**参数说明：**
+
+- **url**: RPC 节点地址
+- **priority**: 优先级（1-100），数字越大优先级越高
+- **rate_limit**: 单节点 QPS 限制，防止触发 RPC 提供商限流
+  - 0 表示无限制（不推荐）
+  - 建议根据 RPC 提供商的限制设置
+  - Alchemy/Infura 付费版: 25-50
+  - 免费公共节点: 5-10
+- **max_concurrent**: 单节点最大并发请求数
+  - 0 表示无限制（不推荐）
+  - 防止单节点过载
+  - 建议设置为 rate_limit 的 30-50%
+
+**节点选择机制：**
+- 优先选择高优先级节点
+- 节点忙碌或限流时自动切换到其他节点
+- 连续失败 5 次触发熔断（30 秒后自动恢复）
+- 根据延迟、错误率、区块高度动态评分
 - 建议配置 2-3 个节点以确保高可用
 
 ## app.yaml 详解

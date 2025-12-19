@@ -96,18 +96,45 @@ scanner:
 # RPC Node Pool
 # Supports high availability with automatic failover based on priority
 rpc_nodes:
-  # Primary node (highest priority)
+  # Primary node (paid tier, high performance)
   - url: "https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY"
     priority: 10
+    rate_limit: 25        # Max requests per second (QPS)
+    max_concurrent: 10    # Max concurrent requests
   
-  # Backup node
+  # Backup node (free tier)
   - url: "https://rpc.ankr.com/eth"
     priority: 5
+    rate_limit: 10
+    max_concurrent: 5
+  
+  # Backup node 2
+  - url: "https://1rpc.io/eth"
+    priority: 1
+    rate_limit: 5
+    max_concurrent: 3
 ```
 
-**Priority Note:**
-- Higher numbers mean higher priority.
-- If the primary node fails, the system automatically switches to the next priority node.
+**Parameter Details:**
+
+- **url**: RPC endpoint address
+- **priority**: Priority level (1-100), higher numbers = higher priority
+- **rate_limit**: Per-node QPS limit to prevent hitting provider rate limits
+  - 0 = unlimited (not recommended)
+  - Set based on your RPC provider's limits
+  - Alchemy/Infura paid: 25-50
+  - Free public nodes: 5-10
+- **max_concurrent**: Maximum concurrent requests per node
+  - 0 = unlimited (not recommended)
+  - Prevents node overload
+  - Recommended: 30-50% of rate_limit
+
+**Node Selection Mechanism:**
+- Prioritizes high-priority nodes
+- Automatically switches when nodes are busy or rate-limited
+- Circuit breaker trips after 5 consecutive failures (30s timeout)
+- Dynamic scoring based on latency, error rate, and block height
+- Recommended: Configure 2-3 nodes for high availability
 
 ## app.yaml Details
 
