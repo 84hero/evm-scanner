@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-12-19
+
 ### Added
 - Per-node QPS rate limiting with configurable `rate_limit` parameter
 - Per-node concurrent request control with configurable `max_concurrent` parameter
@@ -20,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `IsCircuitBroken()` method to check circuit breaker status
 - `MeetsHeightRequirement()` method to verify node height
 - `pickAvailableNodeWithHeight()` for height-aware node selection
+- Comprehensive stress tests and performance benchmarks
+- Advanced RPC example (`examples/rpc-advanced/`)
+- Stress testing example (`examples/stress-test/`)
+- Configuration documentation (EN/CN)
 
 ### Changed
 - **BREAKING**: Removed `limit` parameter from `rpc.NewClient()` - each node now has independent rate limiting
@@ -40,6 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Potential issue where all requests could overwhelm a single high-priority node
 - Race conditions in concurrent node access
 - Inefficient node selection when nodes have different performance characteristics
+- Unused function warnings in golangci-lint
+- Stress test compatibility with CI environments
 
 ### Security
 - Added protection against node overload through per-node concurrency limits
@@ -59,5 +67,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive configuration via YAML files
 - CLI tool for quick deployment
 
-[Unreleased]: https://github.com/84hero/evm-scanner/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/84hero/evm-scanner/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/84hero/evm-scanner/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/84hero/evm-scanner/releases/tag/v0.1.0
