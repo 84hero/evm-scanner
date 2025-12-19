@@ -28,7 +28,7 @@ func main() {
 
 	// 2. Setup Scanner with the Registered Preset
 	ctx := context.Background()
-	client, _ := rpc.NewClient(ctx, []rpc.NodeConfig{{URL: "https://rpc.herochain.io"}}, 5)
+	client, _ := rpc.NewClient(ctx, []rpc.NodeConfig{{URL: "https://rpc.herochain.io"}})
 	store := storage.NewMemoryStore("herochain_")
 
 	// Get preset values

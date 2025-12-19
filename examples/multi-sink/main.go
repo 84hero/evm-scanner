@@ -26,7 +26,7 @@ func main() {
 	rpcCfg := []rpc.NodeConfig{
 		{URL: "https://rpc.ankr.com/eth", Priority: 1},
 	}
-	client, err := rpc.NewClient(ctx, rpcCfg, 5)
+	client, err := rpc.NewClient(ctx, rpcCfg)
 	if err != nil {
 		log.Fatalf("Failed to init RPC client: %v", err)
 	}

@@ -57,7 +57,7 @@ func main() {
 	defer cancel()
 
 	// 2. Initialize RPC
-	client, err := rpc.NewClient(ctx, cfg.RPC, 10)
+	client, err := rpc.NewClient(ctx, cfg.RPC)
 	if err != nil {
 		log.Crit("Failed to init client", "err", err)
 	}

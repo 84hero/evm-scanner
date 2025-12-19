@@ -27,7 +27,7 @@ func main() {
 
 	// 1. Setup
 	rpcCfg := []rpc.NodeConfig{{URL: "https://rpc.ankr.com/eth", Priority: 1}}
-	client, _ := rpc.NewClient(ctx, rpcCfg, 5)
+	client, _ := rpc.NewClient(ctx, rpcCfg)
 	store := storage.NewMemoryStore("decoder_demo_")
 
 	// 2. Setup Decoder

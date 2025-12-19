@@ -261,7 +261,7 @@ func Run(ctx context.Context) error {
 	defer cancel()
 
 	// Components
-	client, err := rpc.NewClient(runCtx, coreCfg.RPC, 20)
+	client, err := rpc.NewClient(runCtx, coreCfg.RPC)
 	if err != nil {
 		return err
 	}

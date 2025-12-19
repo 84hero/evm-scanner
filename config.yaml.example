@@ -35,7 +35,13 @@ scanner:
 rpc_nodes:
   - url: "https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY"
     priority: 10
+    rate_limit: 25        # Max requests per second (0 = unlimited, not recommended)
+    max_concurrent: 10    # Max concurrent requests (0 = unlimited, not recommended)
   - url: "https://rpc.ankr.com/eth"
     priority: 5
+    rate_limit: 10
+    max_concurrent: 5
   - url: "https://1rpc.io/eth"
     priority: 1
+    rate_limit: 5
+    max_concurrent: 3

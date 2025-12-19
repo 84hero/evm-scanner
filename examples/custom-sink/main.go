@@ -37,7 +37,7 @@ func main() {
 	defer cancel()
 
 	// 1. Setup
-	client, _ := rpc.NewClient(ctx, []rpc.NodeConfig{{URL: "https://rpc.ankr.com/eth"}}, 5)
+	client, _ := rpc.NewClient(ctx, []rpc.NodeConfig{{URL: "https://rpc.ankr.com/eth"}})
 	store := storage.NewMemoryStore("custom_sink_")
 
 	// 2. Register our Custom Sink
