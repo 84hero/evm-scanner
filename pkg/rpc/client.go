@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"math/big"
-	"math/rand"
 	"sort"
 	"sync"
 	"sync/atomic"
@@ -105,42 +104,6 @@ func (mc *MultiClient) syncNodes(ctx context.Context) {
 	if maxH > 0 {
 		atomic.StoreUint64(&mc.globalHeight, maxH)
 	}
-}
-
-// pickBestNode selects the best node based on scores
-func (mc *MultiClient) pickBestNode() *Node {
-	mc.mu.RLock()
-	defer mc.mu.RUnlock()
-
-	globalH := atomic.LoadUint64(&mc.globalHeight)
-
-	// Create a copy of candidates for sorting to avoid lock contention
-	candidates := make([]*Node, len(mc.nodes))
-	copy(candidates, mc.nodes)
-
-	if len(candidates) == 1 {
-		return candidates[0]
-	}
-
-	// Sort by score in descending order
-	sort.Slice(candidates, func(i, j int) bool {
-		return candidates[i].Score(globalH) > candidates[j].Score(globalH)
-	})
-
-	// Simple load balancing: if top two nodes have similar scores, pick one randomly
-	// to avoid overloading the first node.
-	top1 := candidates[0]
-	if len(candidates) > 1 {
-		top2 := candidates[1]
-		// If score difference is small (e.g., just a slight latency difference), pick top2 with 50% probability
-		if (top1.Score(globalH) - top2.Score(globalH)) < 50 {
-			if rand.Intn(2) == 0 {
-				return top2
-			}
-		}
-	}
-
-	return top1
 }
 
 // execute performs an RPC request with retry logic and auto node switching
